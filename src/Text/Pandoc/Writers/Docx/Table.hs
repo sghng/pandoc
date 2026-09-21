@@ -12,6 +12,7 @@ Conversion of table blocks to docx.
 module Text.Pandoc.Writers.Docx.Table
   ( tableToOpenXML
   , rowToOpenXML
+  , mapFirstCaptionPara
   , insertCaptionLabel
   , OOXMLRow (..)
   , OOXMLCell (..)
@@ -30,7 +31,7 @@ import Text.Pandoc.Definition
       Caption(Caption),
       Format(Format),
       Attr,
-      Block(Para, Plain),
+      Block(Para, Plain, Div),
       Inline(Str, Span, RawInline),
       Alignment(..),
       RowSpan(..),
@@ -149,6 +150,9 @@ addLabel tableid tablename tablenum bs =
   case bs of
     (Para ils : rest)  -> Para (insertCaptionLabel mkLabelline ils) : rest
     (Plain ils : rest) -> Plain (insertCaptionLabel mkLabelline ils) : rest
+    -- a caption may open with a Div (e.g. a custom-style wrapper);
+    -- label its first paragraph so it keeps its supplement
+    (Div _ _ : _)      -> mapFirstCaptionPara (insertCaptionLabel mkLabelline) bs
     _ -> Para [mkLabel False] : bs
  where
   mkLabelline hl = [mkLabel hl, Str ": "]
@@ -175,6 +179,19 @@ insertCaptionLabel mkLabelline [Span attr@(_, classes, _) ils]
   | "mark" `elem` classes = [Span attr (mkLabelline True ++ ils)]
 insertCaptionLabel mkLabelline ils = mkLabelline False ++ ils
 
+-- | Apply a function to the inlines of a caption's first paragraph,
+-- looking through leading Div wrappers (such as a custom-style
+-- wrapper), so that a styled caption keeps its label and numbering.
+mapFirstCaptionPara :: ([Inline] -> [Inline]) -> [Block] -> [Block]
+mapFirstCaptionPara f = go
+ where
+  go (Para ils  : bs) = Para (f ils) : bs
+  go (Plain ils : bs) = Plain (f ils) : bs
+  go (Div attr bs : rest) =
+    case go bs of
+      []        -> Div attr bs : rest
+      (b : bs') -> Div attr (b : bs') : rest
+  go bs = bs
 
 -- | Parts of a table
 data RowType = HeadRow | BodyRow | FootRow

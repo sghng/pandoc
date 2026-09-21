@@ -1,0 +1,4 @@
+[ Table ( "" , [] , [] ) ( Caption Nothing [ Div ( "" , [] , [ ( "custom-style" , "TestStyle" ) ] ) [ Para [ Str "custom caption" ] ] ] ) [ ( AlignDefault , ColWidthDefault ) ] ( TableHead ( "" , [] , [] ) [] ) [ TableBody ( "" , [] , [] ) ( RowHeadColumns 0 ) [] [ Row ( "" , [] , [] ) [ Cell ( "" , [] , [] ) AlignDefault ( RowSpan 1 ) ( ColSpan 1 ) [ Plain [ Str "c1" ] ] ] ] ] ( TableFoot ( "" , [] , [] ) [] )
+, Table ( "" , [] , [] ) ( Caption Nothing [ Para [ Str "plain caption" ] ] ) [ ( AlignDefault , ColWidthDefault ) ] ( TableHead ( "" , [] , [] ) [] ) [ TableBody ( "" , [] , [] ) ( RowHeadColumns 0 ) [] [ Row ( "" , [] , [] ) [ Cell ( "" , [] , [] ) AlignDefault ( RowSpan 1 ) ( ColSpan 1 ) [ Plain [ Str "c2" ] ] ] ] ] ( TableFoot ( "" , [] , [] ) [] )
+, Figure ( "" , [] , [] ) ( Caption Nothing [ Div ( "" , [] , [ ( "custom-style" , "FigStyle" ) ] ) [ Para [ Str "fig cap" ] ] ] ) [ Plain [ Str "body" ] ]
+]
