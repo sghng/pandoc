@@ -641,7 +641,7 @@ blockToOpenXML' opts (Figure (ident, _, _) (Caption _ longcapt) body) = do
   -- body's first paragraph (the title) is italicized.
   let imageCaption = withParaPropM (pStyleM "Image Caption")
                    . blocksToOpenXML opts
-  let fstCaptionPara inlns = Para $
+  let captionLabel inlns =
         if not $ isEnabled Ext_native_numbering opts
         then inlns
         else Table.insertCaptionLabel mkLabelline inlns
@@ -660,8 +660,11 @@ blockToOpenXML' opts (Figure (ident, _, _) (Caption _ longcapt) body) = do
                      ]
   captionNode <- case longcapt of
     []              -> return []
-    (Para xs  : bs) -> imageCaption (fstCaptionPara xs : bs)
-    (Plain xs : bs) -> imageCaption (fstCaptionPara xs : bs)
+    (Para xs  : bs) -> imageCaption (Para (captionLabel xs) : bs)
+    (Plain xs : bs) -> imageCaption (Para (captionLabel xs) : bs)
+    -- a caption may open with a Div (e.g. a custom-style wrapper);
+    -- label its first paragraph so it keeps its supplement
+    (Div _ _ : _)   -> imageCaption (Table.mapFirstCaptionPara captionLabel longcapt)
     _               -> imageCaption longcapt
   wrapBookmark ident $
     case writerFigureCaptionPosition opts of

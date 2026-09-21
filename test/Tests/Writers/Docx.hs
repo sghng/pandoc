@@ -224,6 +224,12 @@ tests = [ testGroup "inlines"
             "docx/mark_div.native"
             "docx/golden/mark_div.docx"
           , docxTest
+            "captions with leading custom-style div"
+            def{ writerExtensions =
+                   enableExtension Ext_native_numbering (writerExtensions def) }
+            "docx/caption_custom_style.native"
+            "docx/golden/caption_custom_style.docx"
+          , docxTest
             "mark math"
             def
             "docx/mark_math.native"
