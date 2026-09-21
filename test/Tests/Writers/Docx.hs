@@ -223,6 +223,11 @@ tests = [ testGroup "inlines"
             def
             "docx/mark_div.native"
             "docx/golden/mark_div.docx"
+          , docxTest
+            "mark math"
+            def
+            "docx/mark_math.native"
+            "docx/golden/mark_math.docx"
           ]
         , testGroup "track changes"
           [ docxTest
