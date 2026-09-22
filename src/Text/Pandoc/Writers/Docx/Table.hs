@@ -13,7 +13,7 @@ module Text.Pandoc.Writers.Docx.Table
   ( tableToOpenXML
   , rowToOpenXML
   , mapFirstCaptionPara
-  , insertCaptionLabel
+  , captionMarked
   , OOXMLRow (..)
   , OOXMLCell (..)
   , RowType (..)
@@ -31,7 +31,7 @@ import Text.Pandoc.Definition
       Format(Format),
       Attr,
       Block(Para, Plain, Div),
-      Inline(Str, Span, RawInline),
+      Inline(Str, Span, RawInline, Strong, Emph),
       Alignment(..),
       RowSpan(..),
       ColSpan(..),
@@ -142,39 +142,41 @@ tableToOpenXML opts blocksToOpenXML gridTable = do
       CaptionAbove -> captionXml ++ [Elem tbl]
       CaptionBelow -> Elem tbl : captionXml
 
+-- | Label a caption, APA style: the supplement ("Table 9") is its own
+-- bold paragraph before the caption body, and the caption body's
+-- first paragraph (the title) is italicized. When the caption is
+-- marked (its first paragraph is a single mark span), the label
+-- paragraph takes the mark too, so a highlighted caption highlights
+-- its supplement; the numbering field is raw XML and bypasses the
+-- run-property environment, so its run carries its own w:rPr.
 addLabel :: Text -> Text -> Int -> [Block] -> [Block]
 addLabel tableid tablename tablenum bs =
-  case bs of
-    (Para ils : rest)  -> Para (insertCaptionLabel mkLabelline ils) : rest
-    (Plain ils : rest) -> Plain (insertCaptionLabel mkLabelline ils) : rest
-    -- a caption may open with a Div (e.g. a custom-style wrapper);
-    -- label its first paragraph so it keeps its supplement
-    (Div _ _ : _)      -> mapFirstCaptionPara (insertCaptionLabel mkLabelline) bs
-    _ -> Para [mkLabel False] : bs
+  labelPara : mapFirstCaptionPara italicize bs
  where
-  mkLabelline hl = [mkLabel hl, Str ": "]
-  mkLabel hl = Span (tableid,[],[])
+  marked = captionMarked bs
+  labelPara = Para [markWrap (Strong labelline)]
+  markWrap il = if marked then Span ("",["mark"],[]) [il] else il
+  italicize ils = [Emph ils]
+  labelline = [Span (tableid,[],[])
             [Str (tablename <> "\160"),
              RawInline (Format "openxml")
                ("<w:fldSimple w:instr=\"SEQ Table"
-               <> " \\* ARABIC \"><w:r>"
-               <> (if hl
-                     then "<w:rPr><w:highlight w:val=\"yellow\"/></w:rPr>"
+               <> " \\* ARABIC \"><w:r><w:rPr><w:b />"
+               <> (if marked
+                     then "<w:highlight w:val=\"yellow\"/>"
                      else "")
-               <> "<w:t>"
+               <> "</w:rPr><w:t>"
                <> tshow tablenum
-               <> "</w:t></w:r></w:fldSimple>")]
+               <> "</w:t></w:r></w:fldSimple>")]]
 
--- | Prepend a caption's label to its first paragraph's inlines. When
--- the paragraph is a single mark span (a highlighted caption), the
--- label goes inside the span so the supplement takes the highlight
--- pen like the rest of the caption; the label builder is told whether
--- its runs land inside a mark, since the raw numbering field must
--- carry its own run properties (raw XML bypasses the pen).
-insertCaptionLabel :: (Bool -> [Inline]) -> [Inline] -> [Inline]
-insertCaptionLabel mkLabelline [Span attr@(_, classes, _) ils]
-  | "mark" `elem` classes = [Span attr (mkLabelline True ++ ils)]
-insertCaptionLabel mkLabelline ils = mkLabelline False ++ ils
+-- | Whether a caption's first paragraph is a single mark span (a
+-- highlighted caption), looking through leading Div wrappers such as
+-- custom-style wrappers.
+captionMarked :: [Block] -> Bool
+captionMarked (Div _ bs : _) = captionMarked bs
+captionMarked (Para [Span (_, classes, _) _] : _)  = "mark" `elem` classes
+captionMarked (Plain [Span (_, classes, _) _] : _) = "mark" `elem` classes
+captionMarked _ = False
 
 -- | Apply a function to the inlines of a caption's first paragraph,
 -- looking through leading Div wrappers (such as a custom-style
