@@ -679,31 +679,26 @@ blockToOpenXML' opts (Figure (ident, _, _) (Caption _ longcapt) body) = do
   -- Caption
   let imageCaption = withParaPropM (pStyleM "Image Caption")
                    . blocksToOpenXML opts
-  let captionLabel inlns =
-        if not $ isEnabled Ext_native_numbering opts
-        then inlns
-        else Table.insertCaptionLabel mkLabelline inlns
-      mkLabelline hl =
-        [ Span (refid,[],[]) [Str (figname <> "\160"), mkField hl]
-        , Str ": " ]
-      mkField hl = RawInline (Format "openxml") $ mconcat
-                     [ "<w:fldSimple w:instr=\"SEQ Figure"
-                     , " \\* ARABIC \"><w:r>"
-                     , if hl
-                         then "<w:rPr><w:highlight w:val=\"yellow\"/></w:rPr>"
-                         else ""
-                     , "<w:t>"
-                     , tshow fignum
-                     , "</w:t></w:r></w:fldSimple>"
-                     ]
+      marked = Table.captionMarked longcapt
+      labelPara = Para [markWrap (Strong labelline)]
+      markWrap il = if marked then Span ("",["mark"],[]) [il] else il
+      labelline = [ Span (refid,[],[]) [Str (figname <> "\160"), rawfld] ]
+      rawfld = RawInline (Format "openxml") $ mconcat
+                 [ "<w:fldSimple w:instr=\"SEQ Figure"
+                 , " \\* ARABIC \"><w:r><w:rPr><w:b />"
+                 , if marked
+                     then "<w:highlight w:val=\"yellow\"/>"
+                     else ""
+                 , "</w:rPr><w:t>"
+                 , tshow fignum
+                 , "</w:t></w:r></w:fldSimple>"
+                 ]
+      italicize ils = [Emph ils]
   captionNode <- case longcapt of
     []              -> return []
-    (Para xs  : bs) -> imageCaption (Para (captionLabel xs) : bs)
-    (Plain xs : bs) -> imageCaption (Para (captionLabel xs) : bs)
-    -- a caption may open with a Div (e.g. a custom-style wrapper);
-    -- label its first paragraph so it keeps its supplement
-    (Div _ _ : _)   -> imageCaption (Table.mapFirstCaptionPara captionLabel longcapt)
-    _               -> imageCaption longcapt
+    _ | isEnabled Ext_native_numbering opts ->
+          imageCaption (labelPara : Table.mapFirstCaptionPara italicize longcapt)
+      | otherwise -> imageCaption longcapt
   wrapBookmark ident $
     case writerFigureCaptionPosition opts of
       CaptionBelow -> contentsNode : captionNode
