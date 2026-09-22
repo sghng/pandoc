@@ -641,14 +641,20 @@ blockToOpenXML' opts (Figure (ident, _, _) (Caption _ longcapt) body) = do
   let fstCaptionPara inlns = Para $
         if not $ isEnabled Ext_native_numbering opts
         then inlns
-        else let rawfld = RawInline (Format "openxml") $ mconcat
-                          [ "<w:fldSimple w:instr=\"SEQ Figure"
-                          , " \\* ARABIC \"><w:r><w:t>"
-                          , tshow fignum
-                          , "</w:t></w:r></w:fldSimple>"
-                          ]
-             in Span (refid,[],[]) [Str (figname <> "\160") , rawfld]
-                : Str ": " : inlns
+        else Table.insertCaptionLabel mkLabelline inlns
+      mkLabelline hl =
+        [ Span (refid,[],[]) [Str (figname <> "\160"), mkField hl]
+        , Str ": " ]
+      mkField hl = RawInline (Format "openxml") $ mconcat
+                     [ "<w:fldSimple w:instr=\"SEQ Figure"
+                     , " \\* ARABIC \"><w:r>"
+                     , if hl
+                         then "<w:rPr><w:highlight w:val=\"yellow\"/></w:rPr>"
+                         else ""
+                     , "<w:t>"
+                     , tshow fignum
+                     , "</w:t></w:r></w:fldSimple>"
+                     ]
   captionNode <- case longcapt of
     []              -> return []
     (Para xs  : bs) -> imageCaption (fstCaptionPara xs : bs)
