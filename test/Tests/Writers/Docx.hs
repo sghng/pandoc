@@ -228,6 +228,12 @@ tests = [ testGroup "inlines"
             def
             "docx/mark_math.native"
             "docx/golden/mark_math.docx"
+          , docxTest
+            "marked caption keeps its label inside the mark"
+            def{ writerExtensions =
+                   enableExtension Ext_native_numbering (writerExtensions def) }
+            "docx/mark_caption.native"
+            "docx/golden/mark_caption.docx"
           ]
         , testGroup "track changes"
           [ docxTest
