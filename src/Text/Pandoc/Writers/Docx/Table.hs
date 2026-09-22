@@ -12,6 +12,7 @@ Conversion of table blocks to docx.
 module Text.Pandoc.Writers.Docx.Table
   ( tableToOpenXML
   , rowToOpenXML
+  , insertCaptionLabel
   , OOXMLRow (..)
   , OOXMLCell (..)
   , RowType (..)
@@ -146,17 +147,34 @@ tableToOpenXML opts blocksToOpenXML gridTable = do
 addLabel :: Text -> Text -> Int -> [Block] -> [Block]
 addLabel tableid tablename tablenum bs =
   case bs of
-    (Para ils : rest)  -> Para (label : Str ": " : ils) : rest
-    (Plain ils : rest) -> Plain (label : Str ": " : ils) : rest
-    _ -> Para [label] : bs
+    (Para ils : rest)  -> Para (insertCaptionLabel mkLabelline ils) : rest
+    (Plain ils : rest) -> Plain (insertCaptionLabel mkLabelline ils) : rest
+    _ -> Para [mkLabel False] : bs
  where
-  label = Span (tableid,[],[])
+  mkLabelline hl = [mkLabel hl, Str ": "]
+  mkLabel hl = Span (tableid,[],[])
             [Str (tablename <> "\160"),
              RawInline (Format "openxml")
                ("<w:fldSimple w:instr=\"SEQ Table"
-               <> " \\* ARABIC \"><w:r><w:t>"
+               <> " \\* ARABIC \"><w:r>"
+               <> (if hl
+                     then "<w:rPr><w:highlight w:val=\"yellow\"/></w:rPr>"
+                     else "")
+               <> "<w:t>"
                <> tshow tablenum
                <> "</w:t></w:r></w:fldSimple>")]
+
+-- | Prepend a caption's label to its first paragraph's inlines. When
+-- the paragraph is a single mark span (a highlighted caption), the
+-- label goes inside the span so the supplement takes the highlight
+-- pen like the rest of the caption; the label builder is told whether
+-- its runs land inside a mark, since the raw numbering field must
+-- carry its own run properties (raw XML bypasses the pen).
+insertCaptionLabel :: (Bool -> [Inline]) -> [Inline] -> [Inline]
+insertCaptionLabel mkLabelline [Span attr@(_, classes, _) ils]
+  | "mark" `elem` classes = [Span attr (mkLabelline True ++ ils)]
+insertCaptionLabel mkLabelline ils = mkLabelline False ++ ils
+
 
 -- | Parts of a table
 data RowType = HeadRow | BodyRow | FootRow
