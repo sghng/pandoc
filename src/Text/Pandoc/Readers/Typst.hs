@@ -768,18 +768,17 @@ parseTable mbident fields = do
   let normalizeWidths xs =
         let givenwidths = catMaybes xs
             (totgivenwidth :: Int) = sum givenwidths
-            avgwidth = totgivenwidth `div` length givenwidths
-            totwidth = avgwidth * length xs
          in if null givenwidths
               then replicate (length xs) B.ColWidthDefault
               else
                 map
                   ( \case
                       Just x ->
-                        B.ColWidth (fromIntegral x / fromIntegral totwidth)
+                        B.ColWidth (fromIntegral x / fromIntegral totgivenwidth)
+                      -- A column the source left to the layout engine
+                      -- keeps that meaning: Word sizes it from content.
                       Nothing ->
-                        B.ColWidth
-                        (fromIntegral avgwidth / fromIntegral totwidth)
+                        B.ColWidthDefault
                   )
                   xs
   widths <- case columns of
