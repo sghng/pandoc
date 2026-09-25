@@ -87,6 +87,8 @@ data WriterEnv = WriterEnv
   , envListNumId      :: Int
   , envInDel          :: Bool
   , envInNote         :: Bool
+  , envContinuation   :: Bool  -- ^ Run-in continuation of a chopped
+                               -- display-math paragraph, no indent
   , envChangesAuthor  :: Text
   , envChangesDate    :: Text
   , envPrintWidth     :: Integer  -- in points
@@ -103,6 +105,7 @@ defaultWriterEnv = WriterEnv
   , envListNumId = 1
   , envInDel = False
   , envInNote = False
+  , envContinuation = False
   , envChangesAuthor  = "unknown"
   , envChangesDate    = "1969-12-31T19:00:00Z"
   , envPrintWidth     = 1

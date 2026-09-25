@@ -189,6 +189,11 @@ tests = [ testGroup "inlines"
             "docx/tables-default-widths.native"
             "docx/golden/tables-default-widths.docx"
           , docxTest
+          , docxTest
+            "display math run into a paragraph"
+            def
+            "docx/display_math_continuation.native"
+            "docx/golden/display_math_continuation.docx"
             "tables with lists in cells"
             def
             "docx/table_with_list_cell.native"
