@@ -456,8 +456,10 @@ blockToOpenXML' opts (Div (ident,classes,kvs) (Header lev ("",hcls,hkvs) ils : b
       (Div ("",classes,kvs) (Header lev (ident,hcls,hkvs) ils : bs))
 -- A chopped piece of a display-math paragraph is transparent to the
 -- document's structure, and its paragraphs are run-in continuations,
--- carrying no first-line indent.
-blockToOpenXML' opts (Div (_,classes,_) bs) | "math-continuation" `elem` classes =
+-- carrying no first-line indent; the same suppression serves a table
+-- or figure note, marked by the filter as no-indent.
+blockToOpenXML' opts (Div (_,classes,_) bs)
+  | "math-continuation" `elem` classes || "no-indent" `elem` classes =
     local (\env -> env{ envContinuation = True }) $
       blocksToOpenXMLKeepingFirstPara opts bs
 blockToOpenXML' opts (Div (ident,classes,kvs) bs) = do
