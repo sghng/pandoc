@@ -495,12 +495,20 @@ blockToOpenXML' opts (Div (ident,classes,kvs) bs) = do
   wrapBookmark ident $ header <> contents
 
 blockToOpenXML' opts (Header lev (ident,_,kvs) lst) = do
+  afterTable <- gets stAfterTable
   setFirstPara
+  -- A heading after a table gets nothing above it either (Word puts a
+  -- line's lead below its text), so the boundary air the paragraph
+  -- case uses applies here too.
+  let tableAir = [ mknode "w:spacing" [("w:before","240")] () | afterTable ]
   let isSection = case writerTopLevelDivision opts of
                      TopLevelChapter -> lev == 1
                      TopLevelPart -> lev <= 2
                      _ -> False
   paraProps <- withParaPropM (pStyleM (fromString $ "Heading "++show lev)) $
+                    local (\env -> env{ envParaProperties =
+                             envParaProperties env <>
+                               EnvProps Nothing tableAir }) $
                     getParaProps False
   number <-
         if writerNumberSections opts
@@ -551,23 +559,32 @@ blockToOpenXML' opts (Para lst)
        -- inline math element with display math style
   | otherwise = do
       isFirstPara <- gets stFirstPara
+      afterTable <- gets stAfterTable
       let displayMathPara = case lst of
                                  [x] -> isDisplayMath x
                                  _   -> False
       bodyTextStyle <- pStyleM $ if isFirstPara
                        then "First Paragraph"
                        else "Body Text"
+      -- Word attaches a paragraph's line-spacing lead below its text,
+      -- so the paragraph after a table gets nothing above it (the
+      -- table owns no margin and the line's lead is below); that
+      -- paragraph takes direct before-spacing of half the line pitch,
+      -- matching the lead a plain line shows below itself. The style
+      -- cannot carry it, being shared with post-heading paragraphs.
       -- A run-in continuation of a chopped display-math paragraph
-      -- takes a direct zero indent.
+      -- likewise takes a direct zero indent.
       continuation <- asks envContinuation
-      let continuationInd = [ mknode "w:ind" [("w:firstLine","0")] ()
-                            | continuation ]
+      let boundaryAir = [ mknode "w:spacing" [("w:before","240")] ()
+                          | afterTable ]
+                       ++ [ mknode "w:ind" [("w:firstLine","0")] ()
+                          | continuation ]
       paraProps <- local (\env -> env{ envParaProperties =
                                         envParaProperties env <>
                                         EnvProps (Just bodyTextStyle)
-                                          continuationInd })
+                                          boundaryAir })
                       (getParaProps displayMathPara)
-      modify $ \s -> s { stFirstPara = False }
+      modify $ \s -> s { stFirstPara = False, stAfterTable = False }
       contents <- inlinesToOpenXML opts lst
       return [Elem $ mknode "w:p" [] (map Elem paraProps ++ contents)]
 blockToOpenXML' opts (LineBlock lns) = blockToOpenXML opts $ linesToPara lns
@@ -605,6 +622,10 @@ blockToOpenXML' opts (Table attr caption colspecs thead tbodies tfoot) = do
   content <- tableToOpenXML opts
               (local (\env -> env{ envListLevel = -1 }) . blocksToOpenXML opts)
                  (Grid.toTable attr caption colspecs thead tbodies tfoot)
+  -- Word applies none of a paragraph's line-spacing lead between a
+  -- table and the paragraph after it, so mark the boundary; the next
+  -- paragraph carries its own spacing.
+  modify $ \st -> st{ stAfterTable = True }
   let (tableId, _, _) = attr
   wrapBookmark tableId content
 blockToOpenXML' opts el

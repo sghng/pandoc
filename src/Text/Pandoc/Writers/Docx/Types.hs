@@ -129,6 +129,8 @@ data WriterState = WriterState{
          -- ^ cached rStyle element for each highlighting token type;
          --   computed once from stStyleMaps at the start of writing
        , stFirstPara      :: Bool
+       , stAfterTable     :: Bool  -- ^ True between a finished table and
+                                   --   the next paragraph
        , stFirstSectionHeader :: Bool  -- ^ True until first section header is processed
        , stNumIdUsed      :: Bool  -- ^ True if the current numId (envListNumId) has been used.
                                    --   Should only be used once, for the first paragraph.
@@ -156,6 +158,7 @@ defaultWriterState = WriterState{
       , stStyleMaps      = StyleMaps M.empty M.empty M.empty
       , stTokTypesMap    = M.empty
       , stFirstPara      = False
+      , stAfterTable     = False
       , stFirstSectionHeader = True
       , stNumIdUsed      = False
       , stInTable        = False
@@ -169,7 +172,8 @@ defaultWriterState = WriterState{
       }
 
 setFirstPara :: PandocMonad m => WS m ()
-setFirstPara =  modify $ \s -> s { stFirstPara = True }
+setFirstPara =  modify $ \s -> s { stFirstPara = True
+                                 , stAfterTable = False }
 
 type WS m = ReaderT WriterEnv (StateT WriterState m)
 
