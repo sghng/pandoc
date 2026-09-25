@@ -447,6 +447,12 @@ blockToOpenXML' :: (PandocMonad m) => WriterOptions -> Block -> WS m [Content]
 blockToOpenXML' opts (Div (_,classes,_) bs) | "mark" `elem` classes =
   withTextProp (mknode "w:highlight" [("w:val","yellow")] ()) $
     blocksToOpenXMLKeepingFirstPara opts bs
+-- A chopped piece of a display-math paragraph is transparent to the
+-- document structure, like mark divs, and its paragraphs are run-in
+-- continuations, carrying no first-line indent.
+blockToOpenXML' opts (Div (_,classes,_) bs) | "math-continuation" `elem` classes =
+    local (\env -> env{ envContinuation = True }) $
+      blocksToOpenXMLKeepingFirstPara opts bs
 blockToOpenXML' opts (Div (ident,classes,kvs) bs) = do
   when ("math" `elem` classes) $ setFirstPara
   stylemod <- case lookup dynamicStyleKey kvs of
@@ -544,9 +550,15 @@ blockToOpenXML' opts (Para lst)
       bodyTextStyle <- pStyleM $ if isFirstPara
                        then "First Paragraph"
                        else "Body Text"
+      -- A run-in continuation of a chopped display-math paragraph
+      -- takes a direct zero indent.
+      continuation <- asks envContinuation
+      let continuationInd = [ mknode "w:ind" [("w:firstLine","0")] ()
+                            | continuation ]
       paraProps <- local (\env -> env{ envParaProperties =
                                         envParaProperties env <>
-                                        EnvProps (Just bodyTextStyle) [] })
+                                        EnvProps (Just bodyTextStyle)
+                                          continuationInd })
                       (getParaProps displayMathPara)
       modify $ \s -> s { stFirstPara = False }
       contents <- inlinesToOpenXML opts lst

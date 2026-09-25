@@ -265,13 +265,16 @@ stripLeadingTrailingSpace = go . reverse . go . reverse
         go (SoftBreak:xs) = go xs
         go xs             = xs
 
--- | Put display math in its own block (for ODT/DOCX).
+-- | Put display math in its own block (for ODT/DOCX). The pieces after
+-- the first display equation are run-in continuations of one source
+-- paragraph, not new paragraphs, so they carry the class
+-- "math-continuation" and writers can suppress paragraph-start
+-- treatment.
 fixDisplayMath :: Block -> Block
 fixDisplayMath (Plain lst)
   | any isDisplayMath lst && not (all isDisplayMath lst) =
     -- chop into several paragraphs so each displaymath is its own
-    Div ("",["math"],[]) $
-       map Plain $
+    Div ("",["math"],[]) $ markMathContinuations Plain $
        filter (not . null) $
        map stripLeadingTrailingSpace $
        groupBy (\x y -> (isDisplayMath x && isDisplayMath y) ||
@@ -279,13 +282,23 @@ fixDisplayMath (Plain lst)
 fixDisplayMath (Para lst)
   | any isDisplayMath lst && not (all isDisplayMath lst) =
     -- chop into several paragraphs so each displaymath is its own
-    Div ("",["math"],[]) $
-       map Para $
+    Div ("",["math"],[]) $ markMathContinuations Para $
        filter (not . null) $
        map stripLeadingTrailingSpace $
        groupBy (\x y -> (isDisplayMath x && isDisplayMath y) ||
                          not (isDisplayMath x || isDisplayMath y)) lst
 fixDisplayMath x = x
+
+markMathContinuations :: ([Inline] -> Block) -> [[Inline]] -> [Block]
+markMathContinuations f = go False
+  where
+    go _ []              = []
+    go afterMath (xs:xss)
+      | all isDisplayMath xs = f xs : go True xss
+      | otherwise            = wrap afterMath xs : go afterMath xss
+    wrap afterMath xs
+      | afterMath = Div ("", ["math-continuation"], []) [f xs]
+      | otherwise = f xs
 
 -- | Converts a Unicode character into the ASCII sequence used to
 -- represent the character in "smart" Markdown.
