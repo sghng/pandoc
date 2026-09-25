@@ -1,0 +1,17 @@
+[ Para
+    [ Str "Before"
+    , Space
+    , Str "the"
+    , Space
+    , Str "equation"
+    , SoftBreak
+    , Math DisplayMath "x = y"
+    , SoftBreak
+    , Str "continues"
+    , Space
+    , Str "right"
+    , Space
+    , Str "after."
+    ]
+, Para [ Str "New" , Space , Str "paragraph." ]
+]
