@@ -23,9 +23,11 @@ the Typst writer.
 ```
 
 `highlight` may also wrap multiple paragraphs. A pandoc inline cannot
-span paragraphs, so the body is split at paragraph breaks and each
-paragraph is read as a `mark` span. The same holds for other
-inline-styling elements, such as `emph`.
+span paragraphs, so other inline-styling elements such as `emph` are
+split at paragraph breaks and each paragraph is read with the styling
+applied. `highlight` marks a whole region instead: a body with
+paragraph breaks is read as a `mark` div, one highlighted region
+spanning the paragraphs, which is also how Typst lays it out.
 
 ```
 % pandoc -f typst -t native
@@ -38,14 +40,10 @@ Before.
 ]
 ^D
 [ Para [ Str "Before." ]
-, Para
-    [ Span
-        ( "" , [ "mark" ] , [] )
-        [ SoftBreak , Str "Para" , Space , Str "one." ]
-    ]
-, Para
-    [ Span
-        ( "" , [ "mark" ] , [] ) [ Str "Para" , Space , Str "two." ]
+, Div
+    ( "" , [ "mark" ] , [] )
+    [ Para [ Str "Para" , Space , Str "one." ]
+    , Para [ Str "Para" , Space , Str "two." ]
     ]
 ]
 ```
@@ -62,9 +60,11 @@ Before.
 ^D
 Before.
 
-#highlight[ Para one.]
+#block[
+Para one.
 
-#highlight[Para two.]
+Para two.
+]
 ```
 
 Highlight bodies may contain math, inline or display, without breaking
@@ -88,11 +88,8 @@ the reader.
   $ c = d $
 ]
 ^D
-[ Para
-    [ Span ( "" , [ "mark" ] , [] ) [ SoftBreak , Str "Para." ]
-    ]
-, Para
-    [ Span ( "" , [ "mark" ] , [] ) [ Math DisplayMath "c = d" ]
-    ]
+[ Div
+    ( "" , [ "mark" ] , [] )
+    [ Para [ Str "Para." ] , Para [ Math DisplayMath "c = d" ] ]
 ]
 ```
