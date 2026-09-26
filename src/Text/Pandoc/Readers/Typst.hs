@@ -361,6 +361,12 @@ blockHandlers = M.fromList
       -- sometimes text elements include para breaks
       notFollowedBy $ void $ pWithContents pInlines body
       pWithContents pBlocks body)
+  ,("highlight", BlockHandler $ \_ _ fields -> do
+      body <- getField "body" fields
+      -- a body with block content (paragraph breaks, tables) is
+      -- marked as a whole region
+      notFollowedBy $ void $ pWithContents pInlines body
+      B.divWith ("", ["mark"], []) <$> pWithContents pBlocks body)
   ,("title", BlockHandler $ \_ _ fields -> do
       body <- getField "body" fields
       case body of
