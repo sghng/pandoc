@@ -280,6 +280,12 @@ pSpace :: PandocMonad m => P m Content
 pSpace = pTok
       ( \case
           Txt t | T.all (== ' ') t -> True
+          -- the evaluator wraps text in text elements, so a space
+          -- between an element and its label arrives wrapped
+          Elt "text" _ fields | Just (VContent cs) <- M.lookup "body" fields
+            , not (F.null cs)
+            , F.all (\case Txt t -> T.all (== ' ') t
+                           _     -> False) cs -> True
           _ -> False )
 
 pLab :: PandocMonad m => P m Text
