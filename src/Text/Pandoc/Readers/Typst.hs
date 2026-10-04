@@ -360,6 +360,23 @@ colorToHex color = case color of
     in "#" <> hex2 (byte r) <> hex2 (byte g) <> hex2 (byte b)
        <> (if a < 1 then hex2 (byte a) else "")
 
+-- | Convert a Typst value to a pandoc metadata value, for #metadata
+-- elements. Strings, labels (a label is a name), booleans and numbers
+-- convert to their scalar counterparts; arrays convert elementwise;
+-- content converts to blocks, so markup bodies keep their structure
+-- (and their citations). Anything else keeps its printed
+-- representation, so no value is silently lost.
+typstValToMeta :: PandocMonad m => Val -> P m B.MetaValue
+typstValToMeta v = case v of
+  VString t -> pure $ B.MetaString t
+  VLabel t -> pure $ B.MetaString t
+  VBoolean b -> pure $ B.MetaBool b
+  VInteger n -> pure $ B.MetaString (tshow n)
+  VFloat n -> pure $ B.MetaString (tshow n)
+  VArray vs -> B.MetaList <$> mapM typstValToMeta (V.toList vs)
+  VContent cs -> B.MetaBlocks . B.toList <$> pWithContents pBlocks cs
+  _ -> pure $ B.MetaString (repr v)
+
 blockHandlers :: M.Map Identifier BlockHandler
 blockHandlers = M.fromList
   [("text", BlockHandler $ \_ _ fields -> do
@@ -554,6 +571,21 @@ blockHandlers = M.fromList
                    _ -> Just . B.text <$> lift (translateTerm References)
       let hdr = maybe mempty (B.header 1) mbTitle
       pure $ hdr <> B.divWith ("refs", [], []) mempty)
+  ,("metadata", BlockHandler $ \_ mbident fields -> do
+      -- #metadata is inert content: it communicates information to
+      -- filters and templates rather than rendering. A labeled
+      -- occurrence (#metadata(..) <name>) sets the metadata field
+      -- <name> to the converted value; an unlabeled one is ignored.
+      val <- getField "value" fields
+      case (val, mbident) of
+        (VNone, _) -> pure mempty
+        (_, Nothing) -> do
+          ignored "unlabeled metadata"
+          pure mempty
+        (_, Just name) -> do
+          metav <- typstValToMeta val
+          updateState $ \s -> s{ sMeta = B.setMeta name metav (sMeta s) }
+          pure mempty)
   ,("rotate", BlockHandler $ \_ _ fields -> do
       body <- getField "body" fields >>= pWithContents pBlocks
       let kvs = case M.lookup "angle" fields of
