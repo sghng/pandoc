@@ -458,7 +458,6 @@ Pandoc
               ]
           ]
           (TableFoot ( "" , [] , [] ) [])
-      , Para [ Span ( "unavailable" , [] , [] ) [] ]
       , Table
           ( "" , [] , [] )
           (Caption Nothing [])
@@ -513,7 +512,6 @@ Pandoc
               ]
           ]
           (TableFoot ( "" , [] , [] ) [])
-      , Para [ Span ( "tricky" , [] , [] ) [] ]
       , Table
           ( "" , [] , [] )
           (Caption Nothing [])
@@ -566,7 +564,6 @@ Pandoc
               ]
           ]
           (TableFoot ( "" , [] , [] ) [])
-      , Para [ Span ( "noidea" , [] , [] ) [] ]
       , Para
           [ Strong [ Str "Rule" , Space , Str "One\8192\160" ]
           , Str "Any"
@@ -5621,14 +5618,13 @@ Pandoc
       ]
   , Header
       1
-      ( "" , [] , [] )
+      ( "edge-label" , [] , [] )
       [ Str "Splitting"
       , Space
       , Str "edge"
       , Space
       , Str "cases"
       ]
-  , Para [ Span ( "edge-label" , [] , [] ) [] ]
   , Para
       [ Str "Trailing"
       , Space
