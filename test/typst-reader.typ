@@ -145,3 +145,10 @@ color; other parameters are dropped.
 
 An #box(fill: rgb(255, 200, 100, 50%))[translucent box] appends
 an alpha byte.
+
+#metadata("Manuscript Title") <title>
+#metadata(true) <draft>
+#metadata(42) <answer>
+#metadata((1, "two", false)) <keywords>
+#metadata([A *rich* value]) <abstract>
+#metadata("ignored")

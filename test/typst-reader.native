@@ -1,5 +1,27 @@
 Pandoc
-  Meta { unMeta = fromList [] }
+  Meta
+    { unMeta =
+        fromList
+          [ ( "abstract"
+            , MetaBlocks
+                [ Para
+                    [ Str "A"
+                    , Space
+                    , Strong [ Str "rich" ]
+                    , Space
+                    , Str "value"
+                    ]
+                ]
+            )
+          , ( "answer" , MetaString "42" )
+          , ( "draft" , MetaBool True )
+          , ( "keywords"
+            , MetaList
+                [ MetaString "1" , MetaString "two" , MetaBool False ]
+            )
+          , ( "title" , MetaString "Manuscript Title" )
+          ]
+    }
   [ Header
       1
       ( "" , [] , [] )
