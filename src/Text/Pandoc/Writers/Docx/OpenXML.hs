@@ -577,10 +577,15 @@ blockToOpenXML' opts (Para lst)
       -- A run-in continuation of a chopped display-math paragraph
       -- likewise takes a direct zero indent.
       continuation <- asks envContinuation
-      let boundaryAir = [ mknode "w:spacing" [("w:before","240")] ()
+      listLevel <- asks envListLevel
+      numIdUsed <- gets stNumIdUsed
+      let listContinuation = listLevel >= 0 && numIdUsed && not displayMathPara
+          boundaryAir = [ mknode "w:spacing" [("w:before","240")] ()
                           | afterTable ]
+                       -- getParaProps already emits w:ind for a list
+                       -- continuation; do not add a second one.
                        ++ [ mknode "w:ind" [("w:firstLine","0")] ()
-                          | continuation ]
+                          | continuation && not listContinuation ]
       paraProps <- local (\env -> env{ envParaProperties =
                                         envParaProperties env <>
                                         EnvProps (Just bodyTextStyle)

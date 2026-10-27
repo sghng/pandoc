@@ -14,4 +14,16 @@
     , Str "after."
     ]
 , Para [ Str "New" , Space , Str "paragraph." ]
+, BulletList
+    [ [ Para
+          [ Math DisplayMath "x = y"
+          , SoftBreak
+          , Str "list"
+          , Space
+          , Str "continuation."
+          ]
+      , Div ( "" , ["no-indent"] , [] )
+          [ Para [ Str "no" , Space , Str "indent" , Space , Str "in" , Space , Str "list." ] ]
+      ]
+    ]
 ]
