@@ -808,6 +808,7 @@ parseTable mbident fields = do
   children <- V.toList <$> getField "children" fields
   (columns :: Val) <- getField "columns" fields
   let toWidth (VFraction f) = Just (floor $ 1000 * f)
+      toWidth (VRatio r) = Just (floor $ 1000 * r)
       toWidth _ = Nothing
   let normalizeWidths xs =
         -- keep column widths all-or-nothing for the writers: a
