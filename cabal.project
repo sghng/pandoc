@@ -2,6 +2,13 @@ packages: .
           pandoc-lua-engine
           pandoc-server
           pandoc-cli
+          ../typst-hs
+
+-- The upstream typst-hs package has pre-existing warnings on GHC 9.14.
+-- Keep -Werror for pandoc itself without failing the dependency build.
+package typst
+  ghc-options: -Wwarn
+
 constraints: skylighting-format-blaze-html >= 0.1.2.2,
              skylighting-format-context >= 0.1.0.2,
              auto-update >= 0.2.6,
