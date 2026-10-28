@@ -111,13 +111,22 @@ processCitations (Pandoc meta bs) = do
              else id) .
          evalState (walkM insertResolvedCitations $ Pandoc meta' bs)
          $ cits
-  return $ walk removeQuoteSpan
+  return $ walk removeNoOutputCitation
+         $ walk removeQuoteSpan
          $ insertRefs refkvs classes (B.toList bibs)
          $ Pandoc meta'' bs'
 
 removeQuoteSpan :: Inline -> Inline
 removeQuoteSpan (Span ("",["csl-quoted"],[]) xs) = Span nullAttr xs
 removeQuoteSpan x = x
+
+-- Some readers keep citations in the citation stream for disambiguation
+-- but mark them as producing no output. Remove the wrapper only after
+-- citeproc has resolved all citations.
+removeNoOutputCitation :: Inline -> Inline
+removeNoOutputCitation (Span (_, classes, _) _)
+  | "citeproc-no-output" `elem` classes = Span nullAttr []
+removeNoOutputCitation x = x
 
 -- | Retrieve the CSL style specified by the csl or citation-style
 -- metadata field in a pandoc document, or the default CSL style

@@ -620,6 +620,10 @@ inlineHandlers = M.fromList
   ,("cite", InlineHandler $ \_ _ fields -> do
       VLabel key <- getField "key" fields
       (form :: Text) <- getField "form" fields <|> pure "normal"
+      let noOutput = case M.lookup "form" fields of
+                       Just VNone -> True
+                       Just (VString "none") -> True
+                       _ -> False
       let citation =
             B.Citation
               { B.citationId = key,
@@ -634,7 +638,10 @@ inlineHandlers = M.fromList
                 B.citationNoteNum = 0,
                 B.citationHash = 0
               }
-      pure $ B.cite [citation] (B.text $ "[" <> key <> "]"))
+      if noOutput
+         then pure $ B.spanWith ("", ["citeproc-no-output"], []) $
+                B.cite [citation] mempty
+         else pure $ B.cite [citation] (B.text $ "[" <> key <> "]"))
   ,("lower", InlineHandler $ \_ _ fields -> do
       body <- getField "text" fields
       walk (modString T.toLower) <$> pWithContents pInlines body)
