@@ -311,35 +311,6 @@ Pandoc
   , Table
       ( "" , [] , [] )
       (Caption Nothing [])
-      [ ( AlignDefault , ColWidth 0.2 )
-      , ( AlignDefault , ColWidth 0.8 )
-      ]
-      (TableHead ( "" , [] , [] ) [])
-      [ TableBody
-          ( "" , [] , [] )
-          (RowHeadColumns 0)
-          []
-          [ Row
-              ( "" , [] , [] )
-              [ Cell
-                  ( "" , [] , [] )
-                  AlignDefault
-                  (RowSpan 1)
-                  (ColSpan 1)
-                  [ Plain [ Str "a" ] ]
-              , Cell
-                  ( "" , [] , [] )
-                  AlignDefault
-                  (RowSpan 1)
-                  (ColSpan 1)
-                  [ Plain [ Str "b" ] ]
-              ]
-          ]
-      ]
-      (TableFoot ( "" , [] , [] ) [])
-  , Table
-      ( "" , [] , [] )
-      (Caption Nothing [])
       [ ( AlignDefault , ColWidthDefault )
       , ( AlignDefault , ColWidthDefault )
       ]

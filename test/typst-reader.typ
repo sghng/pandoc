@@ -35,11 +35,6 @@ The first #count numbers of the sequence are:
 )
 
 #table(
-  columns: (20%, 80%),
-  [a], [b],
-)
-
-#table(
   columns: (auto, auto),
   [d], [e],
 )
